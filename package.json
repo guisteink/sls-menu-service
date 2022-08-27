@@ -1,0 +1,8 @@
+{
+  "name": "menu-service",
+  "version": "1",
+  "main": "index.js",
+  "repository": "https://github.com/guisteink/sls-menu-service.git",
+  "author": "Guilherme <guilherme.stein@zenvia.com>",
+  "license": "MIT"
+}
