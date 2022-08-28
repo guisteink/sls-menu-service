@@ -1,5 +1,4 @@
-service:
-  name: menu-service
+service: menu-service
 
 plugins:
   - serverless-bundle
@@ -8,15 +7,18 @@ plugins:
 provider:
   name: aws
   runtime: nodejs12.x
-  memorySize: 256
-  stage: ${opt:stage, 'dev'}
+  memorySize: 128
+  stage: v2
   region: sa-east-1
 
 functions:
   hello:
-    handler: src/handlers/getMenu.handler
+    handler: src/handlers/getMenuOfTheDay.handler
     events:
       - http:
           method: GET
-          cors: true
-          path: /cardapio/{campus}
+          path: /menu
+
+custom:
+  bundle:
+    linting: false
