@@ -1,10 +1,12 @@
+import createError from 'http-errors';
+
 import { Scrapper } from '../services/webScrapping';
 import commomMiddleware from '../helpers/commomMiddleware';
-import createError from 'http-errors';
+
+const SCRAPPING_SERVICE = new Scrapper();
 
 async function getMenuOfTheDay(event, context) {
   let menuOfTheDay;
-  const scrappingService = new Scrapper();
 
   const { campus, refeicao } = event.queryStringParameters ?? '';
 
@@ -15,9 +17,10 @@ async function getMenuOfTheDay(event, context) {
     .BadRequest({ status: 400, data: 'Refeicao is a required parameter' });
 
   try {
-    menuOfTheDay = await scrappingService.fetchUfes(campus, refeicao);
+    menuOfTheDay = await SCRAPPING_SERVICE.fetchUfes(campus, refeicao);
   } catch (error) {
-    throw new createError
+    // throw new createError
+    return new createError
       .InternalServerError({ status: 500, data: error });
   }
 

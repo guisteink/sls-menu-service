@@ -10,14 +10,41 @@ provider:
   memorySize: 128
   stage: v2
   region: sa-east-1
+  timeout: 30
 
 functions:
-  hello:
-    handler: src/handlers/getMenuOfTheDay.handler
+  getMenuOfTheDay:
+    handler: src/endpoints/getMenuOfTheDay.handler
     events:
       - http:
           method: GET
           path: /menu
+  sendLunchMessageToGroup:
+    handler: src/endpoints/scheduleEvent.handler
+    events:
+      - http:
+          method: POST
+          path: /message/almoco
+      - schedule:
+          # rate: rate(5 minutes)
+          rate:
+            - cron(45 13 * * * *)
+          enabled: false
+          input:
+            dish: almoco
+  sendDinnerMessageToGroup:
+    handler: src/endpoints/scheduleEvent.handler
+    events:
+      - http:
+          method: POST
+          path: /message/jantar
+      - schedule:
+          # rate: rate(3 minutes)
+          rate:
+            - cron(45 18 * * * *)
+          enabled: false
+          input:
+            dish: jantar
 
 custom:
   bundle:

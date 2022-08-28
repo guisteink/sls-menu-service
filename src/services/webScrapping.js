@@ -26,8 +26,8 @@ export class Scrapper
         if (restaurant === "sao-mateus") baseUrl = this.smUrl;
         if (restaurant === "alegre") baseUrl = this.alegreUrl;
 
-        // if (this.weekdays[today.getDay()] !== ("Sunday" || "Saturday")) {
-        if (true) {
+        if (this.weekdays[today.getDay()] !== ("Sunday" || "Saturday")) {
+        // if (true) {
             console.log("fetching -> " + baseUrl + `/${moment(today).format("YYYY-MM-DD")}` + "...");
 
             // const result = await axios(baseUrl + `/${moment(today).format("YYYY-MM-DD")}`, { method: 'GET' });
@@ -38,10 +38,14 @@ export class Scrapper
 
             // const dinner = $(data[1]).text();
             // const lunch = $(data[0]).text();
-            const lunch = isValidMessage('almoco', $(data[0]).text()) ? $(data[0]).text() : `Error with scrapping`;
-            const dinner = isValidMessage('jantar', $(data[1]).text()) ? $(data[1]).text() : `Error with scrapping`;
-            console.log(`lunch: ${$(data[0]).text()}`);
-            console.log(`dinner: ${$(data[1]).text()}`);
+
+            const lunch = isValidMessage('almoco', $(data[0]).text()) ? $(data[0]).text() : null;
+            // const lunch = isValidMessage('almoco', $(data[0]).text()) ? $(data[0]).text() : `Error with scrapping`;
+            const dinner = isValidMessage('jantar', $(data[1]).text()) ? $(data[1]).text() : null;
+            // const dinner = isValidMessage('jantar', $(data[1]).text()) ? $(data[1]).text() : `Error with scrapping`;
+
+            // console.log(`lunch: ${$(data[0]).text()}`);
+            // console.log(`dinner: ${$(data[1]).text()}`);
 
             if(opt === "todas") return [{almoco: lunch}, {jantar: dinner}];
             else return opt === "almoco" ? lunch : dinner;

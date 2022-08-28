@@ -26,6 +26,7 @@
     "lodash": "^4.17.21",
     "middy": "^0.36.0",
     "moment": "^2.29.4",
+    "node-fetch": "2.6.1",
     "pretty": "^2.0.0",
     "serverless": "^3.22.0",
     "serverless-pseudo-parameters": "^2.6.1"
