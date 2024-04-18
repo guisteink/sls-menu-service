@@ -7,42 +7,37 @@ import commomMiddleware from '../helpers/commomMiddleware';
 const SCRAPPING_SERVICE = new Scrapper();
 
 async function scheduleEvent(event, context) {
-    let flag = event?.path ?? event?.resource ?? event?.dish;
+    const flag = event?.path ?? event?.resource ?? event?.dish;
 
-    if(flag.match('almoco')){
-        let almocoVix, almocoSM, almocoALGR;
+    if (flag.match('almoco')) {
+        const [almocoVix, almocoSM, almocoALGR] = await Promise.all([
+            SCRAPPING_SERVICE.fetchUfes('vitoria', 'almoco'),
+            SCRAPPING_SERVICE.fetchUfes('sao-mateus', 'almoco'),
+            SCRAPPING_SERVICE.fetchUfes('alegre', 'almoco')
+        ]);
 
-        Promise.all[
-            almocoVix = await SCRAPPING_SERVICE.fetchUfes(`vitoria`, `almoco`),
-            almocoSM = await SCRAPPING_SERVICE.fetchUfes(`sao-mateus`, `almoco`),
-            almocoALGR = await SCRAPPING_SERVICE.fetchUfes(`alegre`, `almoco`)
-        ]
-
-        return Promise.all[
-            await sendMessageToTelegram(almocoVix),
-            await sendMessageToTelegram(almocoSM),
-            await sendMessageToTelegram(almocoALGR)
-        ]
+        return await Promise.all([
+            sendMessageToTelegram(almocoVix),
+            sendMessageToTelegram(almocoSM),
+            sendMessageToTelegram(almocoALGR)
+        ]);
     }
 
-    if(flag.match('jantar')){
-        let jantarVix, jantarSM, jantarALGR;
+    if (flag.match('jantar')) {
+        const [jantarVix, jantarSM, jantarALGR] = await Promise.all([
+            SCRAPPING_SERVICE.fetchUfes('vitoria', 'jantar'),
+            SCRAPPING_SERVICE.fetchUfes('sao-mateus', 'jantar'),
+            SCRAPPING_SERVICE.fetchUfes('alegre', 'jantar')
+        ]);
 
-        Promise.all[
-            almocoVix = await SCRAPPING_SERVICE.fetchUfes(`vitoria`, `almoco`),
-            almocoSM = await SCRAPPING_SERVICE.fetchUfes(`sao-mateus`, `almoco`),
-            almocoALGR = await SCRAPPING_SERVICE.fetchUfes(`alegre`, `almoco`)
-        ]
-
-        return Promise.all[
-            await sendMessageToTelegram(jantarVix),
-            await sendMessageToTelegram(jantarSM),
-            await sendMessageToTelegram(jantarALGR)
-        ]
+        return await Promise.all([
+            sendMessageToTelegram(jantarVix),
+            sendMessageToTelegram(jantarSM),
+            sendMessageToTelegram(jantarALGR)
+        ]);
     }
 
-    return new createError
-        .BadRequest({ status: 400, data: 'Wrong parameter, expected "/almoco" or "/jantar' });
+    throw new createError.BadRequest({ status: 400, data: 'Wrong parameter, expected "/almoco" or "/jantar' });
 }
 
 export const handler = commomMiddleware(scheduleEvent);
