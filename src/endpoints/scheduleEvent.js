@@ -1,7 +1,11 @@
 import createError from 'http-errors';
 
-import { sendMessageToTelegram } from '../services/sendMessageToTelegram';
-import { Scrapper } from '../services/webScrapping';
+import {
+    sendMessageToTelegram
+} from '../services/sendMessageToTelegram';
+import {
+    Scrapper
+} from '../services/webScrapping';
 import commomMiddleware from '../helpers/commomMiddleware';
 
 const SCRAPPING_SERVICE = new Scrapper();
@@ -9,40 +13,69 @@ const SCRAPPING_SERVICE = new Scrapper();
 async function scheduleEvent(event, context) {
     let flag = event?.path ?? event?.resource ?? event?.dish;
 
-    if(flag.match('almoco')){
+    console.log('Received request:', event);
+    if (flag.match('almoco')) {
+        console.log('Fetching lunch menus...');
         let almocoVix, almocoSM, almocoALGR;
 
-        Promise.all[
-            almocoVix = await SCRAPPING_SERVICE.fetchUfes(`vitoria`, `almoco`),
-            almocoSM = await SCRAPPING_SERVICE.fetchUfes(`sao-mateus`, `almoco`),
-            almocoALGR = await SCRAPPING_SERVICE.fetchUfes(`alegre`, `almoco`)
-        ]
+        try {
+            [almocoVix, almocoSM, almocoALGR] = await Promise.all([
+                SCRAPPING_SERVICE.fetchUfes('vitoria', 'almoco'),
+                SCRAPPING_SERVICE.fetchUfes('sao-mateus', 'almoco'),
+                SCRAPPING_SERVICE.fetchUfes('alegre', 'almoco')
+            ]);
+        } catch (error) {
+            console.error('Error fetching lunch menus:', error);
+            throw new createError.InternalServerError({
+                status: 500,
+                data: error
+            });
+        }
 
-        return Promise.all[
-            await sendMessageToTelegram(almocoVix),
-            await sendMessageToTelegram(almocoSM),
-            await sendMessageToTelegram(almocoALGR)
-        ]
+        console.log('Sending lunch menus to Telegram...');
+        await Promise.all([
+            sendMessageToTelegram(almocoVix),
+            sendMessageToTelegram(almocoSM),
+            sendMessageToTelegram(almocoALGR)
+        ]);
+
+        console.log('Lunch menus sent successfully.');
+
+        return;
     }
-
-    if(flag.match('jantar')){
+    if (flag.match('jantar')) {
+        console.log('Fetching dinner menus...');
         let jantarVix, jantarSM, jantarALGR;
 
-        Promise.all[
-            almocoVix = await SCRAPPING_SERVICE.fetchUfes(`vitoria`, `almoco`),
-            almocoSM = await SCRAPPING_SERVICE.fetchUfes(`sao-mateus`, `almoco`),
-            almocoALGR = await SCRAPPING_SERVICE.fetchUfes(`alegre`, `almoco`)
-        ]
+        try {
+            [jantarVix, jantarSM, jantarALGR] = await Promise.all([
+                SCRAPPING_SERVICE.fetchUfes('vitoria', 'jantar'),
+                SCRAPPING_SERVICE.fetchUfes('sao-mateus', 'jantar'),
+                SCRAPPING_SERVICE.fetchUfes('alegre', 'jantar')
+            ]);
+        } catch (error) {
+            console.error('Error fetching dinner menus:', error);
+            throw new createError.InternalServerError({
+                status: 500,
+                data: error
+            });
+        }
 
-        return Promise.all[
-            await sendMessageToTelegram(jantarVix),
-            await sendMessageToTelegram(jantarSM),
-            await sendMessageToTelegram(jantarALGR)
-        ]
+        console.log('Sending dinner menus to Telegram...');
+        await Promise.all([
+            sendMessageToTelegram(jantarVix),
+            sendMessageToTelegram(jantarSM),
+            sendMessageToTelegram(jantarALGR)
+        ]);
+
+        console.log('Dinner menus sent successfully.');
     }
 
-    return new createError
-        .BadRequest({ status: 400, data: 'Wrong parameter, expected "/almoco" or "/jantar' });
+    console.error('Wrong parameter:', flag);
+    throw new createError.BadRequest({
+        status: 400,
+        data: 'Wrong parameter, expected "/almoco" or "/jantar'
+    });
 }
 
 export const handler = commomMiddleware(scheduleEvent);

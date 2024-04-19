@@ -26,10 +26,9 @@ functions:
           method: POST
           path: /message/almoco
       - schedule:
-          # rate: rate(5 minutes)
           rate:
-            - cron(45 13 * * * *)
-          enabled: false
+            - cron(30 10 * * ? *)
+          enabled: true
           input:
             dish: almoco
   sendDinnerMessageToGroup:
@@ -39,10 +38,9 @@ functions:
           method: POST
           path: /message/jantar
       - schedule:
-          # rate: rate(3 minutes)
           rate:
-            - cron(45 18 * * * *)
-          enabled: false
+            - cron(0 16 * * ? *)
+          enabled: true
           input:
             dish: jantar
 
