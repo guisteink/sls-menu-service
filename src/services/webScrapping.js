@@ -22,7 +22,7 @@ export class Scrapper {
     }
 
     async fetchUfes(restaurant, opt) {
-        const today = this.moment().subtract(3, 'days').toDate();
+        const today = this.moment().subtract(1, 'days').toDate();
         const baseUrl = this.urls[restaurant];
         const url = `${baseUrl}/${this.moment(today).format("YYYY-MM-DD")}`;
 
