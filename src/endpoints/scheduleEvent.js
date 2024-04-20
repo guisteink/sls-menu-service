@@ -1,50 +1,66 @@
-import createError from 'http-errors';
-import { sendMessageToTelegram } from '../services/sendMessageToTelegram';
-import { Scrapper } from '../services/webScrapping';
+import {
+    sendMessageToTelegram
+} from '../services/sendMessageToTelegram';
+import {
+    Scrapper
+} from '../services/webScrapping';
 import commomMiddleware from '../middleware/commomMiddleware';
 
 const SCRAPPING_SERVICE = new Scrapper();
+
+async function getMenuMessage(mealType) {
+    const [vixMenu, smMenu, algMenu] = await Promise.all([
+        SCRAPPING_SERVICE.fetchUfes('vitoria', mealType),
+        SCRAPPING_SERVICE.fetchUfes('sao-mateus', mealType),
+        SCRAPPING_SERVICE.fetchUfes('alegre', mealType)
+    ]);
+
+    const messages = [vixMenu, smMenu, algMenu].filter(Boolean);
+
+    await Promise.all(messages.map(message => sendMessageToTelegram(message)));
+}
 
 async function scheduleEvent(event, context) {
     const requestPath = event?.path ?? event?.resource ?? event?.dish;
 
     try {
         if (requestPath.includes('almoco')) {
-            const [almocoVix, almocoSM, almocoALGR] = await Promise.all([
-                SCRAPPING_SERVICE.fetchUfes('vitoria', 'almoco'),
-                SCRAPPING_SERVICE.fetchUfes('sao-mateus', 'almoco'),
-                SCRAPPING_SERVICE.fetchUfes('alegre', 'almoco')
-            ].filter(Boolean));
-
-            await Promise.all([
-                sendMessageToTelegram(almocoVix),
-                sendMessageToTelegram(almocoSM),
-                sendMessageToTelegram(almocoALGR)
-            ]);
-
-            return { message: 'Mensagens de almoço enviadas com sucesso' };
+            await getMenuMessage('almoco');
+            return {
+                statusCode: 200,
+                body: JSON.stringify({
+                    ok: true
+                })
+            }
         }
 
         if (requestPath.includes('jantar')) {
-            const [jantarVix, jantarSM, jantarALGR] = await Promise.all([
-                SCRAPPING_SERVICE.fetchUfes('vitoria', 'jantar'),
-                SCRAPPING_SERVICE.fetchUfes('sao-mateus', 'jantar'),
-                SCRAPPING_SERVICE.fetchUfes('alegre', 'jantar')
-            ].filter(Boolean));
-
-            await Promise.all([
-                sendMessageToTelegram(jantarVix),
-                sendMessageToTelegram(jantarSM),
-                sendMessageToTelegram(jantarALGR)
-            ]);
-
-            return { message: 'Mensagens de jantar enviadas com sucesso' };
+            await getMenuMessage('jantar');
+            return {
+                statusCode: 200,
+                body: JSON.stringify({
+                    ok: true
+                })
+            }
         }
 
-        throw new createError.BadRequest({ status: 400, data: 'Parâmetro incorreto, esperado "/almoco" ou "/jantar"' });
-
+        return {
+            statusCode: 400,
+            body: JSON.stringify({
+                message: 'Parâmetro incorreto, esperado "/almoco" ou "/jantar"',
+                ok: false
+            })
+        }
     } catch (error) {
-        throw new createError.InternalServerError({ status: 500, data: error.message });
+        console.log(`Error on scheduleEvent [${error?.message}: ${error?.stack}]`);
+
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                message: 'error on scheduleEvent',
+                ok: false
+            })
+        }
     }
 }
 

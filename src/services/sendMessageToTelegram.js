@@ -1,22 +1,27 @@
 import fetch from 'node-fetch';
-import createError from 'http-errors';
 
-const TOKEN_BOT = '5147515221:AAF55YP8oKk2v6bOWAIDOb2nUJEKMOmQeys';
-const BASE_URL = `https://api.telegram.org/bot${TOKEN_BOT}`;
-const GROUP = -4171092603;
+const BASE_URL = `https://api.telegram.org/bot${process.env.TOKEN_BOT}`;
 
 export async function sendMessageToTelegram(message) {
+    if (!message || message.trim() === '') {
+        console.error('Empty message');
+        return;
+    }
+
     const url = `${BASE_URL}/sendMessage`;
-    console.log(`Sending message to Telegram -> ${url}, message: ${message}`);
 
     try {
-        const response = await fetch(url, {
+        await fetch(url, {
             method: "POST",
-            body: JSON.stringify({ chat_id: GROUP, text: message }),
-            headers: { "Content-Type": "application/json" }
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                chat_id: process.env.GROUP,
+                text: message
+            })
         });
 
-        return response;
     } catch (error) {
         console.error(`Error while sending message: ${error}`);
 
@@ -24,11 +29,20 @@ export async function sendMessageToTelegram(message) {
             console.log(error.response.data);
             console.log(error.response.status);
             console.log(error.response.headers);
-        } else if (error.request) {
-            console.log(error.request);
-        } else {
-            console.log('Error', error.message);
         }
-        return new createError.InternalServerError({ status: 500, data: error });
+
+        if (error.request) {
+            console.log(error.request);
+        }
+
+        console.log('Error', error.message);
+
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                message: 'failed to send message to telegram group',
+                ok: false
+            })
+        }
     }
 }

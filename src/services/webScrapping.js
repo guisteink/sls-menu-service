@@ -14,46 +14,39 @@ export class Scrapper {
             'sao-mateus': "https://restaurante.saomateus.ufes.br/cardapio",
             alegre: "https://restaurante.alegre.ufes.br/cardapio"
         };
+        this.divsByUrl = { // how divs to scrapp in each website section
+            vitoria: 2,
+            'sao-mateus': 3,
+            alegre: 3
+        };
     }
 
     async fetchUfes(restaurant, opt) {
-        const today = this.moment().subtract(3, 'days').toDate();
+        const today = this.moment().subtract(1, 'days').toDate();
         const baseUrl = this.urls[restaurant];
         const url = `${baseUrl}/${this.moment(today).format("YYYY-MM-DD")}`;
-        console.log(`Fetching URL: ${url}`);
 
-        const result = await this.axios(url, {
+        const res = await this.axios(url, {
             method: 'GET',
             httpsAgent: new this.https.Agent({
                 rejectUnauthorized: false
             })
         });
 
-        const $ = cheerio.load(result.data, null, false);
-        const cardapio = [];
+        const $ = cheerio.load(res.data);
+        const menuItems = $('.view-content').children('div')
+            .slice(0, this.divsByUrl[restaurant])
+            .map((index, element) => $(element).text().trim())
+            .get()
+            .filter(dish => this.isValidMessage(opt, dish));
 
-        $('.view-content').children('div').slice(0, 1).each((index, element) => {
-            const item = $(element).text().trim();
-            cardapio.push(item);
-        });
-
-        const lunch = this.isValidMessage('almoco', cardapio[0]);
-        const dinner = this.isValidMessage('jantar', cardapio[1]);
-
-        return opt === "almoco" ? lunch : dinner;
+        return menuItems.join('\n ');
     }
 
-
     isValidMessage(opt, dish) {
-        console.log(`Validating message for ${opt} [${dish}]`);
-
         const lunchRegex = /Almo[çc]o|ALMO[ÇC]O|ALMOCO/;
         const dinnerRegex = /Jantar|JANTAR/;
-
         const regex = opt === "almoco" ? lunchRegex : dinnerRegex;
-        const isValid = regex.test(dish);
-
-        console.log(`Message validation result for ${opt}: ${isValid ? 'valid' : 'invalid'}`);
-        return isValid ? dish : false;
+        return regex.test(dish);
     }
 }
