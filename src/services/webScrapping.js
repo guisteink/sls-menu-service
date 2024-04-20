@@ -22,7 +22,7 @@ export class Scrapper {
     }
 
     async fetchUfes(restaurant, opt) {
-        const today = this.moment().subtract(1, 'days').toDate();
+        const today = this.moment().subtract(3, 'days').toDate();
         const baseUrl = this.urls[restaurant];
         const url = `${baseUrl}/${this.moment(today).format("YYYY-MM-DD")}`;
 
@@ -36,7 +36,10 @@ export class Scrapper {
         const $ = cheerio.load(res.data);
         const menuItems = $('.view-content').children('div')
             .slice(0, this.divsByUrl[restaurant])
-            .map((index, element) => $(element).text().trim())
+            .map((index, element) => {
+                const message = $(element).text().trim()
+                return this.formatMessage(message)
+            })
             .get()
             .filter(dish => this.isValidMessage(opt, dish));
 
@@ -49,4 +52,27 @@ export class Scrapper {
         const regex = opt === "almoco" ? lunchRegex : dinnerRegex;
         return regex.test(dish);
     }
+
+    formatMessage(message) {
+        const replacements = {
+            'Salada(s)?': '\n[Salada]',
+            'Entrada': '\n[Entrada]',
+            'Prato Principal': '\n[Prato principal]',
+            'Prato Proteico': '\n[Prato Proteico]',
+            'Opção': '\n[Opção]',
+            'Acompanhamento(s)?': '\n[Acompanhamento]',
+            'Guarnição': '\n[Guarnição]',
+            'Sobremesa': '\n[Sobremesa]',
+            'Cardápio sujeito a alterações|O cardápio poderá sofrer alterações sem comunicação prévia,? ?de acordo com as necessidades do Setor de Nutrição|O cardápio poderá sofrer alterações sem comunicação prévia': '\n\nCardápio sujeito a alterações'
+        };
+
+        let formattedMessage = message;
+        for (const pattern in replacements) {
+            const regex = new RegExp(pattern, 'gi');
+            formattedMessage = formattedMessage.replace(regex, replacements[pattern]);
+        }
+
+        return formattedMessage;
+    }
+
 }
