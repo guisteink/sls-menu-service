@@ -19,6 +19,7 @@ functions:
       - http:
           method: GET
           path: /menu
+
   sendLunchMessageToGroup:
     handler: src/endpoints/scheduleEvent.handler
     events:
@@ -31,6 +32,7 @@ functions:
           enabled: true
           input:
             dish: almoco
+
   sendDinnerMessageToGroup:
     handler: src/endpoints/scheduleEvent.handler
     events:

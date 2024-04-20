@@ -1,56 +1,59 @@
-const axios = require("axios");
-const { isValidMessage } = require('../helpers/isValidMessage');
-const cheerio = require("cheerio");
-const pretty = require("pretty");
-const moment = require("moment");
+import axios from 'axios';
+import cheerio from 'cheerio';
+import https from 'https';
+import moment from 'moment';
 
-export class Scrapper
-{
-    constructor()
-    {
+export class Scrapper {
+    constructor() {
         this.axios = axios;
         this.cheerio = cheerio;
-        this.pretty = pretty;
-        this.vixUrl = "https://ru.ufes.br/cardapio";
-        this.smUrl = "https://restaurante.saomateus.ufes.br/cardapio";
-        this.alegreUrl = "https://restaurante.alegre.ufes.br/cardapio";
-        this.weekdays = ["Sunday", "Monday", "Tuesday", "Weednesday", "Thursday", "Friday", "Saturday"];
+        this.https = https;
+        this.moment = moment;
+        this.urls = {
+            vitoria: "https://ru.ufes.br/cardapio",
+            'sao-mateus': "https://restaurante.saomateus.ufes.br/cardapio",
+            alegre: "https://restaurante.alegre.ufes.br/cardapio"
+        };
     }
 
-    async fetchUfes(restaurant, opt)
-    {
-        const today = new Date();
-        let baseUrl;
+    async fetchUfes(restaurant, opt) {
+        const today = this.moment().subtract(3, 'days').toDate();
+        const baseUrl = this.urls[restaurant];
+        const url = `${baseUrl}/${this.moment(today).format("YYYY-MM-DD")}`;
+        console.log(`Fetching URL: ${url}`);
 
-        if (restaurant === "vitoria") baseUrl = this.vixUrl;
-        if (restaurant === "sao-mateus") baseUrl = this.smUrl;
-        if (restaurant === "alegre") baseUrl = this.alegreUrl;
+        const result = await this.axios(url, {
+            method: 'GET',
+            httpsAgent: new this.https.Agent({
+                rejectUnauthorized: false
+            })
+        });
 
-        if (this.weekdays[today.getDay()] !== ("Sunday" || "Saturday")) {
-        // if (true) {
-            console.log("fetching -> " + baseUrl + `/${moment(today).format("YYYY-MM-DD")}` + "...");
+        const $ = cheerio.load(result.data, null, false);
+        const cardapio = [];
 
-            // const result = await axios(baseUrl + `/${moment(today).format("YYYY-MM-DD")}`, { method: 'GET' });
-            const result = await axios(baseUrl + `/2022-08-26`, { method: 'GET' }); //! att to dynamic above
-            const $ = cheerio.load(result.data, null, false);
-            const data = $('.view-content').children("div");
-            // const data = $('.field-content').text() ! this works too
+        $('.view-content').children('div').slice(0, 1).each((index, element) => {
+            const item = $(element).text().trim();
+            cardapio.push(item);
+        });
 
-            // const dinner = $(data[1]).text();
-            // const lunch = $(data[0]).text();
+        const lunch = this.isValidMessage('almoco', cardapio[0]);
+        const dinner = this.isValidMessage('jantar', cardapio[1]);
 
-            const lunch = isValidMessage('almoco', $(data[0]).text()) ? $(data[0]).text() : null;
-            // const lunch = isValidMessage('almoco', $(data[0]).text()) ? $(data[0]).text() : `Error with scrapping`;
-            const dinner = isValidMessage('jantar', $(data[1]).text()) ? $(data[1]).text() : null;
-            // const dinner = isValidMessage('jantar', $(data[1]).text()) ? $(data[1]).text() : `Error with scrapping`;
+        return opt === "almoco" ? lunch : dinner;
+    }
 
-            // console.log(`lunch: ${$(data[0]).text()}`);
-            // console.log(`dinner: ${$(data[1]).text()}`);
 
-            if(opt === "todas") return [{almoco: lunch}, {jantar: dinner}];
-            else return opt === "almoco" ? lunch : dinner;
-        }
+    isValidMessage(opt, dish) {
+        console.log(`Validating message for ${opt} [${dish}]`);
 
-        return "Weekend man, relax!";
+        const lunchRegex = /Almo[çc]o|ALMO[ÇC]O|ALMOCO/;
+        const dinnerRegex = /Jantar|JANTAR/;
+
+        const regex = opt === "almoco" ? lunchRegex : dinnerRegex;
+        const isValid = regex.test(dish);
+
+        console.log(`Message validation result for ${opt}: ${isValid ? 'valid' : 'invalid'}`);
+        return isValid ? dish : false;
     }
 }

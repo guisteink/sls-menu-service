@@ -1,33 +1,34 @@
 import fetch from 'node-fetch';
 import createError from 'http-errors';
 
-//TODO: set environment variables
 const TOKEN_BOT = '5147515221:AAF55YP8oKk2v6bOWAIDOb2nUJEKMOmQeys';
 const BASE_URL = `https://api.telegram.org/bot${TOKEN_BOT}`;
-const GROUP_TEST = -633524025;
+const GROUP = -4171092603;
 
 export async function sendMessageToTelegram(message) {
-    console.log(`FETCHING TELEGRAM -> ${BASE_URL+"/sendMessage"}`);
+    const url = `${BASE_URL}/sendMessage`;
+    console.log(`Sending message to Telegram -> ${url}, message: ${message}`);
+
     try {
-        return await fetch(BASE_URL + "/sendMessage", {
+        const response = await fetch(url, {
             method: "POST",
-            body: JSON.stringify({ chat_id: GROUP_TEST, text: message, }),
+            body: JSON.stringify({ chat_id: GROUP, text: message }),
             headers: { "Content-Type": "application/json" }
         });
+
+        return response;
     } catch (error) {
+        console.error(`Error while sending message: ${error}`);
+
         if (error.response) {
-            // Request made and server responded
             console.log(error.response.data);
             console.log(error.response.status);
             console.log(error.response.headers);
         } else if (error.request) {
-            // The request was made but no response was received
             console.log(error.request);
         } else {
-            // Something happened in setting up the request that triggered an Error
             console.log('Error', error.message);
         }
-        return new createError
-            .InternalServerError({ status: 500, data: error });
+        return new createError.InternalServerError({ status: 500, data: error });
     }
 }
