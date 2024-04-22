@@ -16,6 +16,7 @@ async function getMenuMessage(mealType) {
     ]);
 
     const messages = [vixMenu, smMenu, algMenu].filter(Boolean);
+    console.info(JSON.stringify(messages));
 
     await Promise.all(messages.map(message => sendMessageToTelegram(message)));
 }

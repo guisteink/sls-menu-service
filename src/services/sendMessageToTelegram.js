@@ -11,6 +11,8 @@ export async function sendMessageToTelegram(message) {
     const url = `${BASE_URL}/sendMessage`;
 
     try {
+        console.info(`Sending message to telegram: ${message, process.env.GROUP}`);
+
         await fetch(url, {
             method: "POST",
             headers: {
