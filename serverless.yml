@@ -28,7 +28,7 @@ functions:
           path: /message/almoco
       - schedule:
           rate:
-            - cron(45 10 ? * MON-FRI *)
+            - cron(45 12 ? * MON-FRI *)
           enabled: true
           input:
             dish: almoco
@@ -41,7 +41,7 @@ functions:
           path: /message/jantar
       - schedule:
           rate:
-            - cron(0 16 ? * MON-FRI *)
+            - cron(0 19 ? * MON-FRI *)
           enabled: true
           input:
             dish: jantar
